@@ -1,6 +1,14 @@
 class PhotosController < ApplicationController
   before_action :set_photo, only: %i[ show edit update destroy ]
 
+  before_action :ensure_current_user_is_owner, only: [:update, :destroy]
+
+  def ensure_current_user_is_owner
+    if current_user != @photo.owner
+      redirect_back(fallback_location: root_url, alert: "You're not authorized for that.")
+    end
+  end
+
   # GET /photos or /photos.json
   def index
     @photos = Photo.all
@@ -37,6 +45,8 @@ class PhotosController < ApplicationController
 
   # PATCH/PUT /photos/1 or /photos/1.json
   def update
+    if current_user == @photo.owner
+
     respond_to do |format|
       if @photo.update(photo_params)
         format.html { redirect_to @photo, notice: "Photo was successfully updated." }
@@ -46,6 +56,9 @@ class PhotosController < ApplicationController
         format.json { render json: @photo.errors, status: :unprocessable_entity }
       end
     end
+  else
+    redirect_back(fallback_location: root_url, alert: "nice try, sucka")
+  end
   end
 
   # DELETE /photos/1 or /photos/1.json
